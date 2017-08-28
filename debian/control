@@ -1,0 +1,12 @@
+Source: ros-indigo-fcl
+Section: misc
+Priority: extra
+Maintainer: Ioan Sucan <isucan@google.com>
+Build-Depends: debhelper (>= 9.0.0), libboost-all-dev, pkg-config, ros-indigo-catkin, ros-indigo-libccd, ros-indigo-octomap
+Homepage: http://gamma.cs.unc.edu/FCL/
+Standards-Version: 3.9.2
+
+Package: ros-indigo-fcl
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libboost-all-dev, ros-indigo-libccd, ros-indigo-octomap
+Description: FCL is a collision checking library
