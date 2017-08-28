@@ -1,3 +1,26 @@
+## fcl (indigo) - 0.3.4-0
+
+The packages in the `fcl` repository were released into the `indigo` distro by running `/usr/bin/bloom-release -r indigo -t indigo fcl` on `Mon, 28 Aug 2017 17:18:42 -0000`
+
+The `fcl` package was released.
+
+Version of package(s) in repository `fcl`:
+
+- upstream repository: https://github.com/flexible-collision-library/fcl.git
+- release repository: https://github.com/ros-gbp/fcl-release.git
+- rosdistro version: `0.3.3-0`
+- old version: `0.3.3-0`
+- new version: `0.3.4-0`
+
+Versions of tools used:
+
+- bloom version: `0.5.26`
+- catkin_pkg version: `0.3.6`
+- rosdep version: `0.11.4`
+- rosdistro version: `0.4.7`
+- vcstools version: `0.1.38`
+
+
 ## fcl (jade) - 0.3.3-0
 
 The packages in the `fcl` repository were released into the `jade` distro by running `/usr/local/bin/bloom-release -r jade -t jade fcl` on `Fri, 22 Jul 2016 20:45:50 -0000`
