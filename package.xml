@@ -1,6 +1,6 @@
 <package>
   <name>fcl</name>
-  <version>0.3.3</version>
+  <version>0.3.4</version>
   <description>FCL is a collision checking library</description>
   <author email="panj@cs.unc.edu">Jia Pan</author>
   <maintainer email="isucan@google.com">Ioan Sucan</maintainer>
