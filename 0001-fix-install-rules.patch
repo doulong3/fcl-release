@@ -1,4 +1,4 @@
-From cb302b1c4bd9e41027aca547331ec587a0ac325a Mon Sep 17 00:00:00 2001
+From f4e47a5a2c4a5da19b37468a607d2b978329d47c Mon Sep 17 00:00:00 2001
 From: Ioan Sucan <isucan@gmail.com>
 Date: Sat, 15 Feb 2014 20:56:12 -0800
 Subject: [PATCH] fix install rules
@@ -8,10 +8,10 @@ Subject: [PATCH] fix install rules
  1 file changed, 9 insertions(+), 3 deletions(-)
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 33a7d34..4d26ec4 100644
+index bf3e44e..b9a0134 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -128,8 +128,14 @@ install(DIRECTORY include/ DESTINATION include
+@@ -129,8 +129,14 @@ install(DIRECTORY include/ DESTINATION include
    PATTERN ".DS_Store" EXCLUDE
  )
  
@@ -30,5 +30,5 @@ index 33a7d34..4d26ec4 100644
 +#enable_testing()
 +#add_subdirectory(test)
 -- 
-1.9.1
+2.7.4
 
