@@ -1,7 +1,8 @@
 /*
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2011, Willow Garage, Inc.
+ *  Copyright (c) 2011-2014, Willow Garage, Inc.
+ *  Copyright (c) 2014-2016, Open Source Robotics Foundation
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of Open Source Robotics Foundation nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -32,83 +33,42 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */ 
 
-/** \author Jia Pan */
+/** @author Jia Pan */
 
-#ifndef FCL_BROAD_PHASE_SPATIAL_HASH_H
-#define FCL_BROAD_PHASE_SPATIAL_HASH_H
+#ifndef FCL_BROADPHASE_BROADPAHSESPATIALHASH_H
+#define FCL_BROADPHASE_BROADPAHSESPATIALHASH_H
 
-#include "fcl/broadphase/broadphase.h"
-#include "fcl/broadphase/hash.h"
-#include "fcl/BV/AABB.h"
 #include <list>
 #include <map>
+#include "fcl/math/bv/AABB.h"
+#include "fcl/broadphase/broadphase_collision_manager.h"
+#include "fcl/broadphase/detail/simple_hash_table.h"
+#include "fcl/broadphase/detail/sparse_hash_table.h"
+#include "fcl/broadphase/detail/spatial_hash.h"
 
 namespace fcl
 {
 
-/// @brief Spatial hash function: hash an AABB to a set of integer values
-struct SpatialHash
-{
-  SpatialHash(const AABB& scene_limit_, FCL_REAL cell_size_) : cell_size(cell_size_),
-                                                               scene_limit(scene_limit_)
-  {
-    width[0] = std::ceil(scene_limit.width() / cell_size);
-    width[1] = std::ceil(scene_limit.height() / cell_size);
-    width[2] = std::ceil(scene_limit.depth() / cell_size);
-  }
-    
-  std::vector<unsigned int> operator() (const AABB& aabb) const
-  {
-    int min_x = std::floor((aabb.min_[0] - scene_limit.min_[0]) / cell_size);
-    int max_x = std::ceil((aabb.max_[0] - scene_limit.min_[0]) / cell_size);
-    int min_y = std::floor((aabb.min_[1] - scene_limit.min_[1]) / cell_size);
-    int max_y = std::ceil((aabb.max_[1] - scene_limit.min_[1]) / cell_size);
-    int min_z = std::floor((aabb.min_[2] - scene_limit.min_[2]) / cell_size);
-    int max_z = std::ceil((aabb.max_[2] - scene_limit.min_[2]) / cell_size);
-
-    std::vector<unsigned int> keys((max_x - min_x) * (max_y - min_y) * (max_z - min_z));
-    int id = 0;
-    for(int x = min_x; x < max_x; ++x)
-    {
-      for(int y = min_y; y < max_y; ++y)
-      {
-        for(int z = min_z; z < max_z; ++z)
-        {
-          keys[id++] = x + y * width[0] + z * width[0] * width[1];
-        }
-      }
-    }
-    return keys;
-  }
-
-private:
-
-  FCL_REAL cell_size;
-  AABB scene_limit;
-  unsigned int width[3];
-};
-
 /// @brief spatial hashing collision mananger
-template<typename HashTable = SimpleHashTable<AABB, CollisionObject*, SpatialHash> >
-class SpatialHashingCollisionManager : public BroadPhaseCollisionManager
+template<typename S,
+         typename HashTable
+             = detail::SimpleHashTable<AABB<S>, CollisionObject<S>*, detail::SpatialHash<S>> >
+class FCL_EXPORT SpatialHashingCollisionManager : public BroadPhaseCollisionManager<S>
 {
 public:
-  SpatialHashingCollisionManager(FCL_REAL cell_size, const Vec3f& scene_min, const Vec3f& scene_max, unsigned int default_table_size = 1000) : scene_limit(AABB(scene_min, scene_max)),
-                                                                                                                                               hash_table(new HashTable(SpatialHash(scene_limit, cell_size)))
-  {
-    hash_table->init(default_table_size);
-  }
+  SpatialHashingCollisionManager(
+      S cell_size,
+      const Vector3<S>& scene_min,
+      const Vector3<S>& scene_max,
+      unsigned int default_table_size = 1000);
 
-  ~SpatialHashingCollisionManager()
-  {
-    delete hash_table;
-  }
+  ~SpatialHashingCollisionManager();
 
   /// @brief add one object to the manager
-  void registerObject(CollisionObject* obj);
+  void registerObject(CollisionObject<S>* obj);
 
   /// @brief remove one object from the manager
-  void unregisterObject(CollisionObject* obj);
+  void unregisterObject(CollisionObject<S>* obj);
 
   /// @brief initialize the manager, related with the specific type of manager
   void setup();
@@ -117,34 +77,34 @@ public:
   void update();
 
   /// @brief update the manager by explicitly given the object updated
-  void update(CollisionObject* updated_obj);
+  void update(CollisionObject<S>* updated_obj);
 
   /// @brief update the manager by explicitly given the set of objects update
-  void update(const std::vector<CollisionObject*>& updated_objs);
+  void update(const std::vector<CollisionObject<S>*>& updated_objs);
 
   /// @brief clear the manager
   void clear();
 
   /// @brief return the objects managed by the manager
-  void getObjects(std::vector<CollisionObject*>& objs) const;
+  void getObjects(std::vector<CollisionObject<S>*>& objs) const;
 
   /// @brief perform collision test between one object and all the objects belonging to the manager
-  void collide(CollisionObject* obj, void* cdata, CollisionCallBack callback) const;
+  void collide(CollisionObject<S>* obj, void* cdata, CollisionCallBack<S> callback) const;
 
   /// @brief perform distance computation between one object and all the objects belonging ot the manager
-  void distance(CollisionObject* obj, void* cdata, DistanceCallBack callback) const;
+  void distance(CollisionObject<S>* obj, void* cdata, DistanceCallBack<S> callback) const;
 
   /// @brief perform collision test for the objects belonging to the manager (i.e, N^2 self collision)
-  void collide(void* cdata, CollisionCallBack callback) const;
+  void collide(void* cdata, CollisionCallBack<S> callback) const;
 
   /// @brief perform distance test for the objects belonging to the manager (i.e., N^2 self distance)
-  void distance(void* cdata, DistanceCallBack callback) const;
+  void distance(void* cdata, DistanceCallBack<S> callback) const;
 
   /// @brief perform collision test with objects belonging to another manager
-  void collide(BroadPhaseCollisionManager* other_manager, void* cdata, CollisionCallBack callback) const;
+  void collide(BroadPhaseCollisionManager<S>* other_manager, void* cdata, CollisionCallBack<S> callback) const;
 
   /// @brief perform distance test with objects belonging to another manager
-  void distance(BroadPhaseCollisionManager* other_manager, void* cdata, DistanceCallBack callback) const;
+  void distance(BroadPhaseCollisionManager<S>* other_manager, void* cdata, DistanceCallBack<S> callback) const;
 
   /// @brief whether the manager is empty
   bool empty() const;
@@ -153,46 +113,62 @@ public:
   size_t size() const;
 
   /// @brief compute the bound for the environent
-  static void computeBound(std::vector<CollisionObject*>& objs, Vec3f& l, Vec3f& u)
-  {
-    AABB bound;
-    for(unsigned int i = 0; i < objs.size(); ++i)
-      bound += objs[i]->getAABB();
-    
-    l = bound.min_;
-    u = bound.max_;
-  }
+  static void computeBound(std::vector<CollisionObject<S>*>& objs, Vector3<S>& l, Vector3<S>& u);
 
 protected:
 
   /// @brief perform collision test between one object and all the objects belonging to the manager
-  bool collide_(CollisionObject* obj, void* cdata, CollisionCallBack callback) const;
+  bool collide_(CollisionObject<S>* obj, void* cdata, CollisionCallBack<S> callback) const;
 
   /// @brief perform distance computation between one object and all the objects belonging ot the manager
-  bool distance_(CollisionObject* obj, void* cdata, DistanceCallBack callback, FCL_REAL& min_dist) const;
-
+  bool distance_(CollisionObject<S>* obj, void* cdata, DistanceCallBack<S> callback, S& min_dist) const;
 
   /// @brief all objects in the scene
-  std::list<CollisionObject*> objs;
+  std::list<CollisionObject<S>*> objs;
+
+  /// @brief objects partially penetrating (not totally inside nor outside) the
+  /// scene limit are in another list
+  std::list<CollisionObject<S>*> objs_partially_penetrating_scene_limit;
 
   /// @brief objects outside the scene limit are in another list
-  std::list<CollisionObject*> objs_outside_scene_limit;
+  std::list<CollisionObject<S>*> objs_outside_scene_limit;
 
   /// @brief the size of the scene
-  AABB scene_limit;
+  AABB<S> scene_limit;
 
   /// @brief store the map between objects and their aabbs. will make update more convenient
-  std::map<CollisionObject*, AABB> obj_aabb_map; 
+  std::map<CollisionObject<S>*, AABB<S>> obj_aabb_map;
 
   /// @brief objects in the scene limit (given by scene_min and scene_max) are in the spatial hash table
   HashTable* hash_table;
 
+private:
+
+  enum ObjectStatus
+  {
+    Inside,
+    PartiallyPenetrating,
+    Outside
+  };
+
+  template <typename Container>
+  bool distanceObjectToObjects(
+      CollisionObject<S>* obj,
+      const Container& objs,
+      void* cdata,
+      DistanceCallBack<S> callback,
+      S& min_dist) const;
+
 };
 
+template<typename HashTable = detail::SimpleHashTable<AABB<float>, CollisionObject<float>*, detail::SpatialHash<float>>>
+using SpatialHashingCollisionManagerf = SpatialHashingCollisionManager<float, HashTable>;
 
-}
+template<typename HashTable = detail::SimpleHashTable<AABB<double>, CollisionObject<double>*, detail::SpatialHash<double>>>
+using SpatialHashingCollisionManagerd = SpatialHashingCollisionManager<double, HashTable>;
 
-#include "fcl/broadphase/broadphase_spatialhash.hxx"
+} // namespace fcl
 
+#include "fcl/broadphase/broadphase_spatialhash-inl.h"
 
 #endif

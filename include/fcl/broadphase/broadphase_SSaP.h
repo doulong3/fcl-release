@@ -1,7 +1,8 @@
 /*
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2011, Willow Garage, Inc.
+ *  Copyright (c) 2011-2014, Willow Garage, Inc.
+ *  Copyright (c) 2014-2016, Open Source Robotics Foundation
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of Open Source Robotics Foundation nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -32,29 +33,29 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */ 
 
-/** \author Jia Pan */
-
+/** @author Jia Pan */
 
 #ifndef FCL_BROAD_PHASE_SSAP_H
 #define FCL_BROAD_PHASE_SSAP_H
 
-#include "fcl/broadphase/broadphase.h"
+#include <vector>
+#include "fcl/broadphase/broadphase_collision_manager.h"
 
 namespace fcl
 {
 
 /// @brief Simple SAP collision manager 
-class SSaPCollisionManager : public BroadPhaseCollisionManager
+template <typename S>
+class FCL_EXPORT SSaPCollisionManager : public BroadPhaseCollisionManager<S>
 {
 public:
-  SSaPCollisionManager() : setup_(false)
-  {}
+  SSaPCollisionManager();
 
   /// @brief remove one object from the manager
-  void registerObject(CollisionObject* obj);
+  void registerObject(CollisionObject<S>* obj);
 
   /// @brief add one object to the manager
-  void unregisterObject(CollisionObject* obj);
+  void unregisterObject(CollisionObject<S>* obj);
 
   /// @brief initialize the manager, related with the specific type of manager
   void setup();
@@ -66,92 +67,70 @@ public:
   void clear();
 
   /// @brief return the objects managed by the manager
-  void getObjects(std::vector<CollisionObject*>& objs) const;
+  void getObjects(std::vector<CollisionObject<S>*>& objs) const;
 
   /// @brief perform collision test between one object and all the objects belonging to the manager
-  void collide(CollisionObject* obj, void* cdata, CollisionCallBack callback) const;
+  void collide(CollisionObject<S>* obj, void* cdata, CollisionCallBack<S> callback) const;
 
   /// @brief perform distance computation between one object and all the objects belonging to the manager
-  void distance(CollisionObject* obj, void* cdata, DistanceCallBack callback) const;
+  void distance(CollisionObject<S>* obj, void* cdata, DistanceCallBack<S> callback) const;
 
   /// @brief perform collision test for the objects belonging to the manager (i.e., N^2 self collision)
-  void collide(void* cdata, CollisionCallBack callback) const;
+  void collide(void* cdata, CollisionCallBack<S> callback) const;
 
   /// @brief perform distance test for the objects belonging to the manager (i.e., N^2 self distance)
-  void distance(void* cdata, DistanceCallBack callback) const;
+  void distance(void* cdata, DistanceCallBack<S> callback) const;
 
   /// @brief perform collision test with objects belonging to another manager
-  void collide(BroadPhaseCollisionManager* other_manager, void* cdata, CollisionCallBack callback) const;
+  void collide(BroadPhaseCollisionManager<S>* other_manager, void* cdata, CollisionCallBack<S> callback) const;
 
   /// @brief perform distance test with objects belonging to another manager
-  void distance(BroadPhaseCollisionManager* other_manager, void* cdata, DistanceCallBack callback) const;
+  void distance(BroadPhaseCollisionManager<S>* other_manager, void* cdata, DistanceCallBack<S> callback) const;
 
   /// @brief whether the manager is empty
   bool empty() const;
   
   /// @brief the number of objects managed by the manager
-  inline size_t size() const { return objs_x.size(); }
+  size_t size() const;
 
 protected:
   /// @brief check collision between one object and a list of objects, return value is whether stop is possible
-  bool checkColl(std::vector<CollisionObject*>::const_iterator pos_start, std::vector<CollisionObject*>::const_iterator pos_end,
-                 CollisionObject* obj, void* cdata, CollisionCallBack callback) const;
+  bool checkColl(typename std::vector<CollisionObject<S>*>::const_iterator pos_start, typename std::vector<CollisionObject<S>*>::const_iterator pos_end,
+                 CollisionObject<S>* obj, void* cdata, CollisionCallBack<S> callback) const;
   
   /// @brief check distance between one object and a list of objects, return value is whether stop is possible
-  bool checkDis(std::vector<CollisionObject*>::const_iterator pos_start, std::vector<CollisionObject*>::const_iterator pos_end,
-                CollisionObject* obj, void* cdata, DistanceCallBack callback, FCL_REAL& min_dist) const;
+  bool checkDis(typename std::vector<CollisionObject<S>*>::const_iterator pos_start, typename std::vector<CollisionObject<S>*>::const_iterator pos_end,
+                CollisionObject<S>* obj, void* cdata, DistanceCallBack<S> callback, S& min_dist) const;
 
-  bool collide_(CollisionObject* obj, void* cdata, CollisionCallBack callback) const;
+  bool collide_(CollisionObject<S>* obj, void* cdata, CollisionCallBack<S> callback) const;
   
-  bool distance_(CollisionObject* obj, void* cdata, DistanceCallBack callback, FCL_REAL& min_dist) const;
+  bool distance_(CollisionObject<S>* obj, void* cdata, DistanceCallBack<S> callback, S& min_dist) const;
 
-  static inline size_t selectOptimalAxis(const std::vector<CollisionObject*>& objs_x, const std::vector<CollisionObject*>& objs_y, const std::vector<CollisionObject*>& objs_z, std::vector<CollisionObject*>::const_iterator& it_beg, std::vector<CollisionObject*>::const_iterator& it_end)
-  {
-    /// simple sweep and prune method
-    double delta_x = (objs_x[objs_x.size() - 1])->getAABB().min_[0] - (objs_x[0])->getAABB().min_[0];
-    double delta_y = (objs_x[objs_y.size() - 1])->getAABB().min_[1] - (objs_y[0])->getAABB().min_[1];
-    double delta_z = (objs_z[objs_z.size() - 1])->getAABB().min_[2] - (objs_z[0])->getAABB().min_[2];
-
-    int axis = 0;
-    if(delta_y > delta_x && delta_y > delta_z)
-      axis = 1;
-    else if(delta_z > delta_y && delta_z > delta_x)
-      axis = 2;
-
-    switch(axis)
-    {
-    case 0:
-      it_beg = objs_x.begin();
-      it_end = objs_x.end();
-      break;
-    case 1:
-      it_beg = objs_y.begin();
-      it_end = objs_y.end();
-      break;
-    case 2:
-      it_beg = objs_z.begin();
-      it_end = objs_z.end();
-      break;
-    }
-
-    return axis;
-  }
-
+  static size_t selectOptimalAxis(
+      const std::vector<CollisionObject<S>*>& objs_x,
+      const std::vector<CollisionObject<S>*>& objs_y,
+      const std::vector<CollisionObject<S>*>& objs_z,
+      typename std::vector<CollisionObject<S>*>::const_iterator& it_beg,
+      typename std::vector<CollisionObject<S>*>::const_iterator& it_end);
 
   /// @brief Objects sorted according to lower x value
-  std::vector<CollisionObject*> objs_x;
+  std::vector<CollisionObject<S>*> objs_x;
 
   /// @brief Objects sorted according to lower y value
-  std::vector<CollisionObject*> objs_y;
+  std::vector<CollisionObject<S>*> objs_y;
 
   /// @brief Objects sorted according to lower z value
-  std::vector<CollisionObject*> objs_z;
+  std::vector<CollisionObject<S>*> objs_z;
 
   /// @brief tag about whether the environment is maintained suitably (i.e., the objs_x, objs_y, objs_z are sorted correctly
   bool setup_;
 };
 
+using SSaPCollisionManagerf = SSaPCollisionManager<float>;
+using SSaPCollisionManagerd = SSaPCollisionManager<double>;
 
-}
+} // namespace fcl
+
+#include "fcl/broadphase/broadphase_SSaP-inl.h"
 
 #endif
