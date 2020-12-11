@@ -120,11 +120,11 @@ tracks:
     - git-bloom-generate -y rosrpm --prefix release/:{ros_distro} :{ros_distro} -i
       :{release_inc} --os-name rhel
     devel_branch: master
-    last_release: cbfe1e9405aa68138ed1a8f33736429b85500dea
+    last_release: da07e5b4b59a99fcc45ea17a7aa786d5e077fdc9
     last_version: 0.6.1
     name: upstream
     patches: null
-    release_inc: '2'
+    release_inc: '3'
     release_repo_url: null
     release_tag: :{ask}
     ros_distro: noetic
