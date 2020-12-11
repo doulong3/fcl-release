@@ -1,0 +1,12 @@
+Source: ros-noetic-fcl
+Section: misc
+Priority: optional
+Maintainer: TRI Geometry Team <fcl@tri.global>
+Build-Depends: debhelper (>= 9.0.0), cmake, libccd-dev, libeigen3-dev, ros-noetic-octomap
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-noetic-fcl
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libccd-dev, libeigen3-dev, ros-noetic-catkin, ros-noetic-octomap
+Description: FCL: the Flexible Collision Library
